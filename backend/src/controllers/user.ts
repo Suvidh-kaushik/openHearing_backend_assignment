@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { createUserService, getUsersService } from "../services/user.js";
+import { createUserService, getUsersService, updateUserService } from "../services/user.js";
 
 export const createUserController = async(req:Request,res:Response,next:NextFunction) =>{
     try{
@@ -16,8 +16,7 @@ export const createUserController = async(req:Request,res:Response,next:NextFunc
         console.error(err);
         next(err);
     }
-}
-
+};
 
 
 
@@ -44,6 +43,27 @@ export const getUsersController = async (
       status: 200,
       message: "Users fetched successfully",
       data: users,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateUserController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+
+    const updatedUser = await updateUserService(id as string, data);
+
+    return res.status(200).json({
+      status: 200,
+      message: "User updated successfully",
+      data: updatedUser,
     });
   } catch (err) {
     next(err);

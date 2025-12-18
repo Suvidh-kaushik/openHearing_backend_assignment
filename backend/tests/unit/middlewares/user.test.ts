@@ -76,6 +76,7 @@ describe("user validators middleware", () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 400,
         message: "Input Validation Error",
+        errors: expect.any(String),
       });
     });
   });
@@ -120,6 +121,7 @@ describe("user validators middleware", () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 400,
         message: "Input Validation Error",
+        errors: expect.any(String),
       });
     });
 
@@ -138,6 +140,7 @@ describe("user validators middleware", () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 400,
         message: "Input Validation Error",
+        errors: expect.any(String),
       });
     });
   });

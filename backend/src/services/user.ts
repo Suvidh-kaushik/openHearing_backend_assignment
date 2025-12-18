@@ -146,3 +146,58 @@ export const getUsersService = async ({
 };
 
 
+
+type UpdateUserInput = {
+  name?: string;
+  email?: string;
+  primaryMobile?: string;
+  secondaryMobile?: string;
+  aadhaar?: string;
+  pan?: string;
+  dateOfBirth?: Date | string;
+  placeOfBirth?: string;
+  currentAddress?: string;
+  permanentAddress?: string;
+};
+
+export const updateUserService = async (id: string, data: UpdateUserInput) => {
+
+  const findUser = await user.findById(id);
+  
+  if (!findUser) {
+    throw createHttpError.NotFound("User not found");
+  }
+  
+  const updatePayload: any = { ...data };
+
+  if (data.aadhaar) {
+    updatePayload.aadhaar = encrypt(data.aadhaar);
+  }
+
+  if (data.pan) {
+    updatePayload.pan = encrypt(data.pan);
+  }
+
+  const updatedUser = await user
+    .findByIdAndUpdate(id, updatePayload, { new: true })
+    .select("-aadhaar -pan -isDeleted -isActive -deletedAt");
+
+  if (!updatedUser) {
+    throw createHttpError.NotFound("User not found");
+  }
+
+  return {
+    _id: updatedUser._id,
+    name: updatedUser.name,
+    email: updatedUser.email,
+    primaryMobile: updatedUser.primaryMobile,
+    secondaryMobile: updatedUser.secondaryMobile,
+    dateOfBirth: updatedUser.dateOfBirth,
+    placeOfBirth: updatedUser.placeOfBirth,
+    currentAddress: updatedUser.currentAddress,
+    permanentAddress: updatedUser.permanentAddress,
+    createdAt: updatedUser.createdAt,
+    updatedAt: updatedUser.updatedAt,
+  };
+};
+

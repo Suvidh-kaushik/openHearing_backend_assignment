@@ -54,4 +54,42 @@ export const getUsersSchema = z.object({
     mobile: z.string().optional(),
     dob: z.string().optional(),
   })
-})
+});
+
+export const updateUserSchema = z.object({
+  body: z
+    .object({
+      name: z.string().min(2).optional(),
+      email: z.string().email().optional(),
+      primaryMobile: z
+        .string()
+        .regex(/^\+[1-9]\d{1,14}$/, "Invalid phone number")
+        .optional(),
+      secondaryMobile: z
+        .string()
+        .regex(/^\+[1-9]\d{1,14}$/, "Invalid phone number")
+        .optional(),
+      aadhaar: z
+        .string()
+        .regex(/^\d{12}$/, "Invalid Aadhaar number")
+        .optional(),
+      pan: z
+        .string()
+        .trim()
+        .toUpperCase()
+        .regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/, "Invalid PAN format")
+        .optional(),
+      dateOfBirth: z.string().regex(/\d{4}-\d{2}-\d{2}/).optional(),
+      placeOfBirth: z.string().min(2).optional(),
+      currentAddress: z.string().min(5).optional(),
+      permanentAddress: z.string().min(5).optional(),
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+      message: "At least one field must be provided to update",
+    }),
+    params: z.object({
+      id: z
+        .string()
+        .regex(/^[0-9a-fA-F]{24}$/, "Invalid user id"),
+    })
+});

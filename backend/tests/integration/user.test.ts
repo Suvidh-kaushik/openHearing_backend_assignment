@@ -84,6 +84,7 @@ describe("Users API integration", () => {
       expect(res.body).toEqual({
         status: 400,
         message: "Input Validation Error",
+        errors: expect.any(String),
       });
     });
   });
@@ -124,6 +125,7 @@ describe("Users API integration", () => {
       expect(res.body).toEqual({
         status: 400,
         message: "Input Validation Error",
+        errors: expect.any(String),
       });
     });
   });

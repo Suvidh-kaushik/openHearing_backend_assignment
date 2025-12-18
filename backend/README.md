@@ -9,7 +9,8 @@ The main API's of
  - create
  - update
  - get
-are present in the user service which is auth protected
+   
+Are present in the user service which is auth protected
 The authentication is done using a mail-based otp generation, this otp is generated and sent to the mails service througha rabbitmq message broker which sends it to the user using nodemailer
 The otp is stored and verified using redis but we use MongoDB as the main DB for the entire project
 After authentication a user perform create,get,update and delete operations

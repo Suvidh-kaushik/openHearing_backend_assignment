@@ -19,6 +19,7 @@ export interface IUser extends Document {
 
   isActive: boolean;
   isDeleted: boolean;
+  isVerified?: boolean;
   deletedAt?: Date;
 
   createdAt: Date;

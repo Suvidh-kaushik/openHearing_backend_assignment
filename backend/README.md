@@ -1,17 +1,58 @@
 ## Backend (User Service)
 
-This folder contains the backend **User Service** for the project. It is a TypeScript + Express API with MongoDB (Mongoose), Redis, RabbitMQ, JWT-based auth, and a Vitest test suite (unit + integration).
+
+<img width="993" height="450" alt="Screenshot from 2025-12-18 16-22-26" src="https://github.com/user-attachments/assets/ee901c32-44cc-4935-b1bd-fb22c2a1caf4" />
+
+### Architecture Overview
+The entire backend is made up of 2 service the user and the mail service
+The main API's of 
+ - create
+ - update
+ - get
+are present in the user service which is auth protected
+The authentication is done using a mail-based otp generation, this otp is generated and sent to the mails service througha rabbitmq message broker which sends it to the user using nodemailer
+The otp is stored and verified using redis but we use MongoDB as the main DB for the entire project
+After authentication a user perform create,get,update and delete operations
+The delete functionality is soft-delete in nature meaning we do not remove userdata from the db, whenever a user tries to re-login we get him back meaning he is no-longer deleted
+
+## Features
+- Soft DELETE feature
+- Cursor Based Pagination
+- RateLimiting
+- Layered Architecture with model,service,controller and routes
+- API request Validation
+- Middleware protection (authentication)
+- Test setup using vitest
+
+## Pain Points/Learnings
+- Setup and writing of tests was the toughest, never setup or wrote tests with the vitest library
+- Cursor based pagination 
+- Handling type-safety in typescript
 
 ### Tech stack
 
 - **Runtime**: Node.js (ESM)
 - **Framework**: Express
 - **DB**: MongoDB via Mongoose
-- **Cache / rate limiting / OTP storage**: Redis
+- **OTP storage**: Redis
 - **Messaging**: RabbitMQ (for email/OTP queue)
 - **Validation**: Zod
 - **Auth**: JWT (HTTP-only cookie)
 - **Testing**: Vitest + Supertest
+
+---
+
+### Key API endpoints (summary)
+
+- **Auth**
+  - `POST /api/v1/auth/login` — request OTP via email (rate-limited via Redis + RabbitMQ queue publish).
+  - `POST /api/v1/auth/verify` — verify OTP, create/restore user, set JWT cookie.
+
+- **Users** (JWT-protected)
+  - `POST /api/v1/users` — create user for the authenticated email.
+  - `GET /api/v1/users` — list users with filters and cursor-based pagination.
+  - `PATCH /api/v1/users/:id` — update user (only self).
+  - `DELETE /api/v1/users/:id` — soft-delete user (only self).
 
 ---
 
@@ -122,7 +163,7 @@ cd backend/user
 pnpm dev
 ```
 
-The service will start on `http://localhost:${PORT}` (default `3001`).
+The service will start on `http://localhost:${PORT}` (default `5001`).
 
 **Production build & start:**
 
@@ -161,19 +202,5 @@ pnpm test:integration
   - `/api/v1/users` (create, list, validation, authorization)
 
 ---
-
-### Key API endpoints (summary)
-
-- **Auth**
-  - `POST /api/v1/auth/login` — request OTP via email (rate-limited via Redis + RabbitMQ queue publish).
-  - `POST /api/v1/auth/verify` — verify OTP, create/restore user, set JWT cookie.
-
-- **Users** (JWT-protected)
-  - `POST /api/v1/users` — create user for the authenticated email.
-  - `GET /api/v1/users` — list users with filters and cursor-based pagination.
-  - `PATCH /api/v1/users/:id` — update user (only self).
-  - `DELETE /api/v1/users/:id` — soft-delete user (only self).
-
-Use the integration tests as examples of expected request/response shapes. 
 
 

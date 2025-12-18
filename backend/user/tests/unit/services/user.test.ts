@@ -6,6 +6,8 @@ const mockUserModel = {
   findOne: vi.fn(),
   create: vi.fn(),
   find: vi.fn(),
+  findById: vi.fn(),
+  findByIdAndUpdate: vi.fn(),
 };
 
 const mockQueryChain = {
@@ -62,6 +64,8 @@ describe("user service", () => {
     vi.resetAllMocks();
 
     mockUserModel.find = vi.fn(() => mockQueryChain);
+    mockUserModel.findById = vi.fn();
+    mockUserModel.findByIdAndUpdate = vi.fn();
     mockQueryChain.sort = vi.fn(() => mockQueryChain);
     mockQueryChain.limit = vi.fn(() => mockQueryChain);
     mockQueryChain.select = vi.fn();
@@ -208,7 +212,7 @@ describe("user service", () => {
       expect(mockQueryChain.sort).toHaveBeenCalledWith({ _id: -1 });
       expect(mockQueryChain.limit).toHaveBeenCalledWith(input.limit + 1);
       expect(mockQueryChain.select).toHaveBeenCalledWith(
-        "-aadhaar -pan -isDeleted -isActive -deletedAt -permanentAddress"
+        "-aadhaar -pan -deletedAt -permanentAddress"
       );
 
       expect(result.pagination.limit).toBe(input.limit);
@@ -239,6 +243,138 @@ describe("user service", () => {
       expect(result.pagination.hasNextPage).toBe(false);
       expect(result.pagination.nextCursor).toBe(users[users.length - 1]?._id);
       expect(result.users).toEqual(users);
+    });
+  });
+
+  describe("updateUserService", () => {
+    it("should throw NotFound error if user does not exist", async () => {
+      const { updateUserService } = await import(createUserServicePath);
+
+      mockUserModel.findById.mockResolvedValue(null);
+
+      await expect(
+        updateUserService("non-existent-id", { name: "New Name" } as any)
+      ).rejects.toMatchObject({
+        message: "User not found",
+      });
+
+      expect(mockUserModel.findById).toHaveBeenCalledWith("non-existent-id");
+    });
+
+    it("should update user and encrypt aadhaar and pan when provided", async () => {
+      const { updateUserService } = await import(createUserServicePath);
+      const { encrypt } = await import("../../../src/utils/encrypt.js");
+
+      const existingUser = { _id: "user-id" };
+      mockUserModel.findById.mockResolvedValue(existingUser);
+
+      const updatedUser = {
+        _id: "user-id",
+        name: "Updated Name",
+        email: "updated@example.com",
+        primaryMobile: "1234567890",
+        secondaryMobile: "0987654321",
+        dateOfBirth: new Date("1990-01-01"),
+        placeOfBirth: "City",
+        currentAddress: "Updated address 123",
+        permanentAddress: "Updated permanent address 456",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      (mockUserModel.findByIdAndUpdate as any).mockReturnValue({
+        select: vi.fn().mockResolvedValue(updatedUser),
+      });
+
+      const input = {
+        name: "Updated Name",
+        email: "updated@example.com",
+        aadhaar: "123456789012",
+        pan: "ABCDE1234F",
+      };
+
+      const result = await updateUserService("user-id", input as any);
+
+      expect(encrypt).toHaveBeenCalledWith(input.aadhaar);
+      expect(encrypt).toHaveBeenCalledWith(input.pan);
+
+      expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        "user-id",
+        expect.objectContaining({
+          name: input.name,
+          email: input.email,
+          aadhaar: `enc-${input.aadhaar}`,
+          pan: `enc-${input.pan}`,
+        }),
+        { new: true }
+      );
+
+      expect(result).toEqual({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        primaryMobile: updatedUser.primaryMobile,
+        secondaryMobile: updatedUser.secondaryMobile,
+        dateOfBirth: updatedUser.dateOfBirth,
+        placeOfBirth: updatedUser.placeOfBirth,
+        currentAddress: updatedUser.currentAddress,
+        permanentAddress: updatedUser.permanentAddress,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt,
+      });
+    });
+  });
+
+  describe("deleteUserService", () => {
+    it("should throw NotFound error if user does not exist", async () => {
+      const { deleteUserService } = await import(createUserServicePath);
+
+      mockUserModel.findByIdAndUpdate.mockResolvedValue(null);
+
+      await expect(
+        deleteUserService("non-existent-id" as any)
+      ).rejects.toMatchObject({
+        message: "User not found",
+      });
+
+      expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        "non-existent-id",
+        expect.objectContaining({
+          isDeleted: true,
+          deletedAt: expect.any(Date),
+        })
+      );
+    });
+
+    it("should soft delete user and return minimal info", async () => {
+      const { deleteUserService } = await import(createUserServicePath);
+
+      const now = new Date();
+      const deletedUser = {
+        _id: "user-id",
+        name: "John Doe",
+        email: "john@example.com",
+        deletedAt: now,
+      };
+
+      mockUserModel.findByIdAndUpdate.mockResolvedValue(deletedUser);
+
+      const result = await deleteUserService("user-id" as any);
+
+      expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        "user-id",
+        expect.objectContaining({
+          isDeleted: true,
+          deletedAt: expect.any(Date),
+        })
+      );
+
+      expect(result).toEqual({
+        _id: deletedUser._id,
+        name: deletedUser.name,
+        email: deletedUser.email,
+        deletedAt: deletedUser.deletedAt,
+      });
     });
   });
 });

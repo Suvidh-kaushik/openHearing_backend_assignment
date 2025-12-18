@@ -72,15 +72,11 @@ export const verifyUser = async (req:Request, res:Response) => {
 
   await redisClient.del(otpKey);
 
-  let userData = await user.findOne({ email });
+  let userData = await user.findOneAndUpdate({ email }, {isDeleted:false, deletedAt:null}, {new:true});
 
-  if(!userData){
-     userData = await user.create({ email,isVerified:true });
-  }
+  const userId = userData?._id.toString();
 
-
-  const userId = userData._id.toString();
-  const token = generateToken(userId, res);
+  const token = generateToken(userId as string, res);
 
   return res.status(200).json({
     message: "User Verified",

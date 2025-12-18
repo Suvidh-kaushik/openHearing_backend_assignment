@@ -12,7 +12,6 @@ export interface IUser extends Document {
   placeOfBirth?: string;
   currentAddress?: string;
   permanentAddress?: string;
-  isActive?: boolean;
   isDeleted: boolean;
   isVerified?: boolean;
   deletedAt?: Date;
@@ -68,28 +67,19 @@ const userSchema = new Schema<IUser>(
       type: String,
       trim: true,
     },
-
     currentAddress: {
       type: String,
       minlength: 10,
     },
-
     permanentAddress: {
       type: String,
       minlength: 10,
     },
-
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-
     isDeleted: {
       type: Boolean,
       default: false,
       index: true,
     },
-
     deletedAt: {
       type: Date,
     },

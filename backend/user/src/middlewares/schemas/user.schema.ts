@@ -92,3 +92,11 @@ export const updateUserSchema = z.object({
         .regex(/^[0-9a-fA-F]{24}$/, "Invalid user id"),
     })
 });
+
+export const deleteUserSchema = z.object({
+  params: z.object({
+    id: z
+      .string()
+      .regex(/^[0-9a-fA-F]{24}$/, "Invalid user id"),
+  })
+});

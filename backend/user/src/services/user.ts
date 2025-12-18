@@ -123,20 +123,22 @@ export const getUsersService = async ({
     .find(query)
     .sort({ _id: -1 }) //descending 
     .limit(limit + 1)
-    .select("-aadhaar -pan -isDeleted -isActive -deletedAt -permanentAddress");
+    .select("-aadhaar -pan -deletedAt -permanentAddress");
 
-  const hasNextPage = users.length > limit;
+    const activeUsers = users.filter(user => !user.isDeleted);
+
+  const hasNextPage = activeUsers.length > limit;
 
   if (hasNextPage) {
-    users.pop();
+    activeUsers.pop();
   }
 
-  const nextCursor = users.length
-  ? users[users.length - 1]?._id
+  const nextCursor = activeUsers.length
+  ? activeUsers[activeUsers.length - 1]?._id
   : null;
 
   return {
-    users,
+    users: activeUsers,
     pagination: {
       limit,
       hasNextPage,
@@ -164,7 +166,7 @@ export const updateUserService = async (id: string, data: UpdateUserInput) => {
 
   const findUser = await user.findById(id);
   
-  if (!findUser) {
+  if (!findUser || findUser.isDeleted) {
     throw createHttpError.NotFound("User not found");
   }
   
@@ -201,3 +203,16 @@ export const updateUserService = async (id: string, data: UpdateUserInput) => {
   };
 };
 
+
+export const deleteUserService = async (id: string) => {
+  const deletedUser = await user.findByIdAndUpdate(id, { isDeleted: true, deletedAt: new Date() });
+  if (!deletedUser || deletedUser.isDeleted) {
+    throw createHttpError.NotFound("User not found");
+  }
+  return {
+    _id: deletedUser._id,
+    name: deletedUser.name,
+    email: deletedUser.email,
+    deletedAt: deletedUser.deletedAt,
+  };
+};

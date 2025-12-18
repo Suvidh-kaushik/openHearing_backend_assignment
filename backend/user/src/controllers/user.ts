@@ -1,10 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 import { createUserService, getUsersService, updateUserService } from "../services/user.js";
+import type { AuthenticatedRequest } from "../middlewares/authenticate.js";
+import type { IUser } from "../models/userModel.js";
 
-export const createUserController = async(req:Request,res:Response,next:NextFunction) =>{
+export const createUserController = async(req:AuthenticatedRequest,res:Response,next:NextFunction) =>{
     try{
-      
-        const user = await createUserService(req.body);
+        const {email} = req.user as IUser;
+        const user = await createUserService({...req.body, email});
 
         return res.status(201).json({
             status: 201,
@@ -50,7 +52,7 @@ export const getUsersController = async (
 };
 
 export const updateUserController = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {

@@ -5,7 +5,6 @@ import {date, z} from "zod";
 export const createUserSchema = z.object({
   body: z.object({
     name: z.string().min(2),
-    email: z.string().email(),
     primaryMobile: z.string().regex(/^\+[1-9]\d{1,14}$/, "Invalid phone number"),
     secondaryMobile: z.string().regex(/^\+[1-9]\d{1,14}$/, "Invalid phone number"),
     aadhaar: z.string().regex(/^\d{12}$/, "Invalid Aadhaar number"),

@@ -1,0 +1,22 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: resonately-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: resonately-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: /
+
+

@@ -2,22 +2,17 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IUser extends Document {
   _id:mongoose.Types.ObjectId,
-  name: string;
+  name?: string;
   email: string;
-
-  primaryMobile: string;
+  primaryMobile?: string;
   secondaryMobile?: string;
-
-  aadhaar: string;
-  pan: string;
-
-  dateOfBirth: Date;
-  placeOfBirth: string;
-
-  currentAddress: string;
-  permanentAddress: string;
-
-  isActive: boolean;
+  aadhaar?: string;
+  pan?: string;
+  dateOfBirth?: Date;
+  placeOfBirth?: string;
+  currentAddress?: string;
+  permanentAddress?: string;
+  isActive?: boolean;
   isDeleted: boolean;
   isVerified?: boolean;
   deletedAt?: Date;
@@ -30,7 +25,6 @@ const userSchema = new Schema<IUser>(
   {
     name: {
       type: String,
-      required: true,
       trim: true,
       minlength: 1,
     },
@@ -46,7 +40,6 @@ const userSchema = new Schema<IUser>(
 
     primaryMobile: {
       type: String,
-      required: true,
       unique: true,
       index: true,
     },
@@ -57,13 +50,11 @@ const userSchema = new Schema<IUser>(
 
     aadhaar: {
       type: String,
-      required: true,
       select: false,
     },
 
     pan: {
       type: String,
-      required: true,
       uppercase: true,
       index: true,
       select: false,
@@ -71,24 +62,20 @@ const userSchema = new Schema<IUser>(
 
     dateOfBirth: {
       type: Date,
-      required: true,
     },
 
     placeOfBirth: {
       type: String,
-      required: true,
       trim: true,
     },
 
     currentAddress: {
       type: String,
-      required: true,
       minlength: 10,
     },
 
     permanentAddress: {
       type: String,
-      required: true,
       minlength: 10,
     },
 

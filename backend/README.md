@@ -57,6 +57,37 @@ The delete functionality is soft-delete in nature meaning we do not remove userd
 
 ---
 
+### Mail service setup
+
+The backend is split logically into:
+
+- **User service** (this repo’s `backend/user`) — owns auth, user CRUD, publishes OTP email jobs.
+- **Mail service** — a separate worker that listens to RabbitMQ and actually sends emails.
+
+Mail flow:
+
+1. `POST /api/v1/auth/login`:
+   - Generates an OTP.
+   - Stores it in Redis with TTL.
+   - Publishes a message to RabbitMQ:
+     - Queue: `send-mail`
+     - Payload: `{ to, subject, body }` where `body` contains the OTP.
+2. **Mail worker**:
+   - Connects to the same RabbitMQ instance.
+   - Consumes messages from `send-mail`.
+   - Uses your SMTP provider (`nodemailer`, SES, etc.) to send the email.
+
+To run the mail worker you need:
+
+- Access to RabbitMQ with the same `RABBIT_MQ_*` env vars.
+- A small Node.js process that:
+  - Uses `amqplib` to `connect`, `createChannel`, and `consume("send-mail", handler)`.
+  - Parses the message and sends the email with your SMTP credentials.
+
+This README focuses on the **user service**; the **mail worker** can live in a separate repo or folder, as long as it shares the same RabbitMQ config.
+
+---
+
 ### Project structure (backend/user)
 
 ```text
@@ -115,32 +146,27 @@ services:
 
 ### Environment variables
 
-Create a `.env` file in `backend/user` (or adjust to your setup):
+In `backend/user`, copy `.env.example` to `.env` and adjust values:
 
 ```bash
-PORT=3001
-
-# MongoDB
-MONGODB_URL=mongodb://localhost:27017/resonately_user
-
-# JWT
-JWT_SECRET=your_jwt_secret
-
-# Crypto
-SECRET_KEY=your_secret_key
-
-# CORS
-CORS_ORIGIN=http://localhost:3000
-
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# RabbitMQ
-RABBIT_MQ_HOST=localhost
-RABBIT_MQ_USER=resonately
-RABBIT_MQ_PASSWORD=resonately
-RABBIT_MQ_VHOST=/
+cp backend/user/.env.example backend/user/.env
 ```
+
+The main variables:
+
+- **Core**
+  - `PORT` – port for the user service (e.g. `3001`)
+  - `MONGODB_URL` – Mongo connection string
+  - `JWT_SECRET` – secret for signing JWTs
+  - `SECRET_KEY` – symmetric key for field-level encryption
+  - `CORS_ORIGIN` – allowed frontend origin
+- **Redis**
+  - `REDIS_URL` – Redis connection string (OTP + rate limiting)
+- **RabbitMQ (mail service)**
+  - `RABBIT_MQ_HOST` – RabbitMQ host
+  - `RABBIT_MQ_USER` – RabbitMQ username
+  - `RABBIT_MQ_PASSWORD` – RabbitMQ password
+  - `RABBIT_MQ_VHOST` – RabbitMQ vhost to use
 
 ---
 
